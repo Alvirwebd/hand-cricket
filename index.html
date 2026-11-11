@@ -1013,6 +1013,8 @@
       <div style="font-size:14px; color:#555; margin-top:8px;" id="waiting-status-text">
         ⏳ Waiting for your friend to enter the classroom...
       </div>
+            <div id="waiting-status-msg" style="font-size:13px; color:#1565c0; margin:6px 0 2px 0; font-weight:600; min-height:20px;"></div>
+      <button id="btn-retry-host" style="display:none; margin:4px auto 2px auto; background:#ff6b35; color:#fff; border:none; border-radius:8px; padding:8px 20px; font-size:14px; font-weight:700; cursor:pointer;">&#x1F504; Retry Creating Room</button>
       <button class="back-link-btn" id="btn-cancel-waiting" style="margin-top:6px;">Cancel & Go Back</button>
     </div>
   </div>
@@ -1427,22 +1429,47 @@
         this.remoteThrow = null;
         this.localThrow = null;
       }
+      _makePeerConfig() {
+        // Use multiple free STUN servers for reliable NAT traversal
+        return {
+          debug: 0,
+          config: {
+            iceServers: [
+              { urls: 'stun:stun.l.google.com:19302' },
+              { urls: 'stun:stun1.l.google.com:19302' },
+              { urls: 'stun:stun2.l.google.com:19302' },
+              { urls: 'stun:stun.stunprotocol.org:3478' },
+              { urls: 'stun:stun.cloudflare.com:3478' }
+            ]
+          }
+        };
+      }
       initHost(onReady, onConnected, onData, onError) {
         if (this.peer) {
           try { this.peer.destroy(); } catch(e) {}
         }
         this.isHost = true;
         this.shortCode = Math.floor(1000 + Math.random() * 9000).toString();
-        const peerId = 'lastbench-' + this.shortCode;
+        const peerId = 'lastbench-hc-' + this.shortCode;
+        this._openTimeout = null;
 
         try {
-          this.peer = new Peer(peerId);
+          this.peer = new Peer(peerId, this._makePeerConfig());
         } catch(e) {
           if (onError) onError(e);
           return;
         }
 
+        // If peer doesn't open within 12s, show error
+        this._openTimeout = setTimeout(() => {
+          if (!this.peer || this.peer.disconnected || this.peer.destroyed) return;
+          const e = new Error('Connection to matchmaking server timed out. Check your internet and try again.');
+          e.type = 'timeout';
+          if (onError) onError(e);
+        }, 12000);
+
         this.peer.on('open', id => {
+          clearTimeout(this._openTimeout);
           onReady(this.shortCode);
         });
 
@@ -1452,9 +1479,10 @@
         });
 
         this.peer.on('error', err => {
-          console.error('Peer error:', err);
+          clearTimeout(this._openTimeout);
+          console.error('Peer host error:', err.type, err);
           if (err.type === 'unavailable-id') {
-            // retry with fresh code
+            // retry with a fresh code
             this.initHost(onReady, onConnected, onData, onError);
             return;
           }
@@ -1469,22 +1497,35 @@
         let digits = code.toString().replace(/[^0-9]/g, '');
         if (!digits) digits = code.toString().trim();
         this.shortCode = digits;
-        const targetPeerId = digits.startsWith('lastbench-') ? digits : ('lastbench-' + digits);
+        const targetPeerId = 'lastbench-hc-' + digits;
+        this._joinTimeout = null;
 
         try {
-          this.peer = new Peer();
+          this.peer = new Peer(undefined, this._makePeerConfig());
         } catch(e) {
           if (onError) onError(e);
           return;
         }
 
+        // Timeout for join connection
+        this._joinTimeout = setTimeout(() => {
+          if (!this.peer || this.peer.destroyed) return;
+          const e = new Error('Could not reach your friend\'s room. Make sure the code is correct and your friend is waiting!');
+          e.type = 'timeout';
+          if (onError) onError(e);
+        }, 15000);
+
         this.peer.on('open', () => {
-          this.conn = this.peer.connect(targetPeerId, { reliable: true });
-          this.setupConn(onConnected, onData, onError);
+          this.conn = this.peer.connect(targetPeerId, { reliable: true, serialization: 'json' });
+          this.setupConn(() => {
+            clearTimeout(this._joinTimeout);
+            onConnected();
+          }, onData, onError);
         });
 
         this.peer.on('error', err => {
-          console.error('Peer join error:', err);
+          clearTimeout(this._joinTimeout);
+          console.error('Peer join error:', err.type, err);
           if (onError) onError(err);
         });
       }
@@ -1675,17 +1716,28 @@
     // Host: Create Room
     document.getElementById('btn-host-create-room').addEventListener('click', () => {
       audio.init();
+      startHostRoom();
+    });
+
+    function startHostRoom() {
       closeAllModals();
       modalWaitingPeer.classList.add('active');
-      document.getElementById('display-room-code').textContent = "GEN...";
+      const codeEl = document.getElementById('display-room-code');
+      codeEl.textContent = "⏳ Connecting...";
+
+      // Show connecting status
+      const statusEl = document.getElementById('waiting-status-msg');
+      if (statusEl) statusEl.textContent = "🔗 Connecting to matchmaking server...";
 
       mp.initHost(
         shortCode => {
-          document.getElementById('display-room-code').textContent = shortCode;
+          codeEl.textContent = shortCode;
+          if (statusEl) statusEl.textContent = "⏳ Waiting for your friend to join with this code...";
         },
         () => {
           // Connected with friend!
           audio.playSchoolBell();
+          if (statusEl) statusEl.textContent = "✅ Friend connected!";
           closeAllModals();
           setupMultiplayerRoles(true);
         },
@@ -1693,12 +1745,28 @@
           handlePeerMessage(data);
         },
         err => {
-          alert('Could not start room. Please check internet connection.');
-          closeAllModals();
-          modalMultiplayerLobby.classList.add('active');
+          console.error('Host error:', err);
+          const msg = err && err.type === 'timeout'
+            ? '⏰ Matchmaking server timed out. Try again!'
+            : '❌ Could not create room: ' + (err.message || err.type || 'Network error');
+          codeEl.textContent = "FAILED";
+          if (statusEl) statusEl.textContent = msg;
+          // Show retry button
+          const retryBtn = document.getElementById('btn-retry-host');
+          if (retryBtn) retryBtn.style.display = 'inline-block';
         }
       );
-    });
+    }
+
+    // Retry button for host
+    const retryHostBtn = document.getElementById('btn-retry-host');
+    if (retryHostBtn) {
+      retryHostBtn.style.display = 'none';
+      retryHostBtn.addEventListener('click', () => {
+        retryHostBtn.style.display = 'none';
+        startHostRoom();
+      });
+    }
 
     // Copy Invite Link
     document.getElementById('btn-copy-link').addEventListener('click', () => {
@@ -1741,12 +1809,13 @@
     function joinRoomWithCode(code) {
       audio.init();
       const btn = document.getElementById('btn-join-friend-room');
-      btn.textContent = "Connecting to desk...";
+      if (btn) { btn.textContent = "⏳ Connecting to desk..."; btn.disabled = true; }
 
       mp.initJoin(
         code,
         () => {
           audio.playSchoolBell();
+          if (btn) { btn.textContent = "✅ Connected!"; btn.disabled = false; }
           closeAllModals();
           setupMultiplayerRoles(false);
         },
@@ -1754,8 +1823,12 @@
           handlePeerMessage(data);
         },
         err => {
-          alert('Could not connect to room! Verify code and ensure your friend is waiting in the room.');
-          btn.textContent = "Join Friend's Match 🏏";
+          console.error('Join error:', err);
+          const msg = err && err.type === 'timeout'
+            ? '⏰ Timed out! Make sure your friend created a room and the code is correct.'
+            : '❌ Could not connect! Check the code and make sure your friend is waiting.';
+          alert(msg);
+          if (btn) { btn.textContent = "Join Friend's Match 🏏"; btn.disabled = false; }
         }
       );
     }
