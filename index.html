@@ -631,6 +631,80 @@
       text-transform: uppercase;
     }
 
+    .desk-home-btn {
+      position: absolute;
+      top: 10px;
+      left: 14px;
+      z-index: 50;
+      background: rgba(46, 28, 17, 0.95);
+      border: 2px solid #ffb300;
+      color: #fff;
+      font-family: 'Permanent Marker', cursive;
+      font-size: 15px;
+      padding: 7px 16px;
+      border-radius: 20px;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.6);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.15s;
+      touch-action: manipulation;
+    }
+    .desk-home-btn:hover, .desk-home-btn:active {
+      background: #d32f2f;
+      border-color: #ffcdd2;
+      transform: translateY(-1px);
+    }
+
+    .popup-top-nav-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+      width: 100%;
+    }
+    .menu-back-btn {
+      background: #efebe9;
+      border: 1.5px solid #8d6e63;
+      border-radius: 8px;
+      color: #3e2723;
+      font-family: 'Patrick Hand', cursive;
+      font-size: 15px;
+      font-weight: bold;
+      padding: 5px 12px;
+      cursor: pointer;
+      box-shadow: 0 2px 0 #8d6e63;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      touch-action: manipulation;
+      transition: all 0.1s;
+    }
+    .menu-back-btn:hover, .menu-back-btn:active {
+      background: #d7ccc8;
+    }
+    .popup-close-x {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: #fff;
+      border: 1.5px solid #8d6e63;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Permanent Marker', cursive;
+      font-size: 16px;
+      color: #b71c1c;
+      cursor: pointer;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+      touch-action: manipulation;
+    }
+    .popup-close-x:hover, .popup-close-x:active {
+      background: #ffebee;
+      transform: scale(1.08);
+    }
+
     .school-chips-row {
       display: flex;
       gap: 8px;
@@ -766,10 +840,12 @@
     <canvas id="canvas3d"></canvas>
   </div>
 
+  <!-- Top Left Home / Main Menu Button -->
+  <button class="desk-home-btn interactive" onclick="openMainMenu()">🏠 Main Menu</button>
+
   <!-- Top Utilities -->
   <div class="top-desk-tools interactive">
     <button id="btn-top-friends" class="tool-icon-btn highlight" onclick="openMultiplayerLobby()">👥 Play with Friend</button>
-    <button id="btn-top-menu" class="tool-icon-btn" onclick="openMainMenu()">🏠 Modes</button>
     <button id="btn-sound" class="tool-icon-btn" title="Toggle Sound">🔊</button>
   </div>
 
@@ -997,7 +1073,11 @@
   <!-- ==================== POPUP 6: 3D COIN TOSS ==================== -->
   <div class="school-modal-backdrop" id="modal-toss">
     <div class="notebook-popup-card">
-      <h2 class="popup-title">🪙 TOSS KOR!</h2>
+      <div class="popup-top-nav-row">
+        <button class="menu-back-btn" onclick="openMainMenu()">← 🏠 Main Menu</button>
+        <button class="popup-close-x" onclick="openMainMenu()" title="Cancel Match">✕</button>
+      </div>
+      <h2 class="popup-title" id="toss-title">🪙 TOSS KOR!</h2>
       <p class="popup-sub" id="toss-instruction">Call Head or Tail before we flip the coin on the school desk!</p>
       
       <div class="school-chips-row" id="toss-call-row">
@@ -1015,12 +1095,17 @@
         </div>
         <button class="school-action-btn" id="btn-start-match" style="display:none;">Start Match! 🚀</button>
       </div>
+      <button class="back-link-btn" onclick="openMainMenu()" style="margin-top:10px;">🏠 Cancel & Return to Main Menu</button>
     </div>
   </div>
 
   <!-- ==================== POPUP 7: INNINGS BREAK ==================== -->
   <div class="school-modal-backdrop" id="modal-break">
     <div class="notebook-popup-card">
+      <div class="popup-top-nav-row">
+        <button class="menu-back-btn" onclick="openMainMenu()">← 🏠 Main Menu</button>
+        <button class="popup-close-x" onclick="openMainMenu()" title="Exit Match">✕</button>
+      </div>
       <h2 class="popup-title">⏸️ INNINGS OVER!</h2>
       <p class="popup-sub" id="break-summary-text"></p>
       <div style="background:#fff; border:1.5px dashed #b71c1c; padding:12px; border-radius:8px;">
@@ -1029,12 +1114,17 @@
         <div style="font-size:14px; color:#0d47a1; font-weight:bold;" id="break-equation">Need 0 in 0 balls</div>
       </div>
       <button class="school-action-btn" id="btn-start-innings2">Start Chase! 🔥</button>
+      <button class="back-link-btn" onclick="openMainMenu()">🏠 Exit Match to Main Menu</button>
     </div>
   </div>
 
   <!-- ==================== POPUP 8: GAME OVER ==================== -->
   <div class="school-modal-backdrop" id="modal-gameover">
     <div class="notebook-popup-card">
+      <div class="popup-top-nav-row">
+        <button class="menu-back-btn" onclick="openMainMenu()">← 🏠 Main Menu</button>
+        <button class="popup-close-x" onclick="openMainMenu()" title="Return to Menu">✕</button>
+      </div>
       <h2 class="popup-title" id="gameover-title">🏆 YOU WON!</h2>
       <p class="popup-sub" id="gameover-subtitle"></p>
       
@@ -1696,20 +1786,32 @@
       labelAiHand.textContent = isHost ? "FRIEND" : "HOST";
       playerLabelScore.textContent = "YOU";
 
+      // Open Toss modal on BOTH screens!
+      window.openModal('modal-toss');
+      coinGroup.visible = true;
+      coinGroup.position.set(0, 1.2, 0);
+      coinMesh.rotation.set(0, 0, 0);
+
+      const tossTitle = document.getElementById('toss-title');
+      const tossInstruction = document.getElementById('toss-instruction');
+      const tossCallRow = document.getElementById('toss-call-row');
+      const btnFlipCoin = document.getElementById('btn-flip-coin');
+      const tossDecisionBox = document.getElementById('toss-decision-box');
+
+      tossDecisionBox.style.display = 'none';
+
       if (isHost) {
-        closeAllModals();
-        modalToss.classList.add('active');
-        coinGroup.visible = true;
-        coinGroup.position.set(0, 1.2, 0);
-        document.getElementById('toss-instruction').textContent = "You are Host! Call Head or Tail and spin the coin:";
-        document.getElementById('toss-call-row').style.display = 'flex';
-        document.getElementById('btn-flip-coin').style.display = 'block';
-        document.getElementById('toss-decision-box').style.display = 'none';
-        // Send rule sync
+        tossTitle.textContent = "🪙 TOSS (YOU ARE HOST)";
+        tossInstruction.textContent = "You are Host! Call Head or Tail and spin the coin:";
+        tossCallRow.style.display = 'flex';
+        btnFlipCoin.style.display = 'block';
+        btnFlipCoin.textContent = "Spin Coin on Desk! 🌀";
         mp.send({ type: 'sync_rules', overs: GameState.overs, wicketsLimit: GameState.wicketsLimit });
       } else {
-        closeAllModals();
-        showBanner("WAITING FOR TOSS...", "Host is flipping coin on the desk", "info", 0);
+        tossTitle.textContent = "🪙 TOSS (WAITING FOR HOST)";
+        tossInstruction.innerHTML = "🎉 Connected with friend!<br>Your friend (Host) is choosing Head/Tail and spinning coin...";
+        tossCallRow.style.display = 'none';
+        btnFlipCoin.style.display = 'none';
       }
     }
 
@@ -1724,15 +1826,22 @@
       notebookMatchLabel.textContent = "📖 TIFFIN PERIOD HAND CRICKET";
       labelPlayerHand.textContent = "YOU";
       labelAiHand.textContent = "BENCHMATE (AI)";
-      closeAllModals();
-      modalToss.classList.add('active');
+      window.openModal('modal-toss');
       coinGroup.visible = true;
       coinGroup.position.set(0, 1.2, 0);
       coinMesh.rotation.set(0, 0, 0);
-      document.getElementById('toss-instruction').textContent = "Call Head or Tail before we flip the coin on the school desk!";
-      document.getElementById('toss-call-row').style.display = 'flex';
-      document.getElementById('btn-flip-coin').style.display = 'block';
-      document.getElementById('toss-decision-box').style.display = 'none';
+
+      const tossTitle = document.getElementById('toss-title');
+      const tossInstruction = document.getElementById('toss-instruction');
+      const tossCallRow = document.getElementById('toss-call-row');
+      const btnFlipCoin = document.getElementById('btn-flip-coin');
+      const tossDecisionBox = document.getElementById('toss-decision-box');
+
+      tossTitle.textContent = "🪙 TOSS KOR!";
+      tossInstruction.textContent = "Call Head or Tail before we flip the coin on the school desk!";
+      tossCallRow.style.display = 'flex';
+      btnFlipCoin.style.display = 'block';
+      tossDecisionBox.style.display = 'none';
     });
 
     const btnHeads = document.getElementById('call-heads');
@@ -1748,8 +1857,6 @@
       btnHeads.classList.remove('selected');
     });
 
-    // Coin flip state declared above (coinFlipping, coinTime, coinOutcome)
-
     document.getElementById('btn-flip-coin').addEventListener('click', () => {
       if (coinFlipping) return;
       audio.init();
@@ -1762,7 +1869,11 @@
       coinOutcome = Math.random() < 0.5 ? 'heads' : 'tails';
 
       if (GameState.mode === 'multiplayer' && mp.isHost) {
-        mp.send({ type: 'coin_flip', outcome: coinOutcome });
+        mp.send({
+          type: 'host_flipped_coin',
+          hostCall: GameState.userCall,
+          outcome: coinOutcome
+        });
       }
     });
 
@@ -1786,7 +1897,10 @@
         } else {
           coinMesh.rotation.set(Math.PI, 0, 0);
         }
-        handleTossResult();
+        // Only host or solo decides toss outcome directly
+        if (GameState.mode === 'solo' || (GameState.mode === 'multiplayer' && mp.isHost)) {
+          handleTossResult();
+        }
       }
     }
 
@@ -1806,11 +1920,20 @@
           resultText.innerHTML = `Coin is <strong>${coinOutcome.toUpperCase()}</strong>!<br>🎉 YOU WON THE TOSS! Pick Bat or Bowl:`;
           chooseRow.style.display = 'flex';
           btnStart.style.display = 'none';
+          mp.send({
+            type: 'toss_winner_result',
+            outcome: coinOutcome,
+            winner: 'host'
+          });
         } else {
           resultText.innerHTML = `Coin is <strong>${coinOutcome.toUpperCase()}</strong>.<br>Friend won the toss! Waiting for their choice...`;
           chooseRow.style.display = 'none';
           btnStart.style.display = 'none';
-          mp.send({ type: 'toss_choice_request' });
+          mp.send({
+            type: 'toss_winner_result',
+            outcome: coinOutcome,
+            winner: 'friend'
+          });
         }
       } else {
         // Solo vs AI
@@ -1832,7 +1955,7 @@
       GameState.userRole = 'bat';
       if (GameState.mode === 'multiplayer') {
         if (mp.isHost) {
-          mp.send({ type: 'match_start', hostRole: 'bat', overs: GameState.overs, wicketsLimit: GameState.wicketsLimit });
+          mp.send({ type: 'start_match', hostRole: 'bat', overs: GameState.overs, wicketsLimit: GameState.wicketsLimit });
         } else {
           mp.send({ type: 'client_chose_role', clientRole: 'bat' });
         }
@@ -1844,7 +1967,7 @@
       GameState.userRole = 'bowl';
       if (GameState.mode === 'multiplayer') {
         if (mp.isHost) {
-          mp.send({ type: 'match_start', hostRole: 'bowl', overs: GameState.overs, wicketsLimit: GameState.wicketsLimit });
+          mp.send({ type: 'start_match', hostRole: 'bowl', overs: GameState.overs, wicketsLimit: GameState.wicketsLimit });
         } else {
           mp.send({ type: 'client_chose_role', clientRole: 'bowl' });
         }
@@ -1857,7 +1980,7 @@
     });
 
     function startMatch() {
-      closeAllModals();
+      window.closeAllModals();
       coinGroup.visible = false;
       initInnings(1);
     }
@@ -1869,24 +1992,34 @@
       if (msg.type === 'sync_rules') {
         GameState.overs = msg.overs;
         GameState.wicketsLimit = msg.wicketsLimit;
-      } else if (msg.type === 'coin_flip') {
+      } else if (msg.type === 'host_flipped_coin') {
         coinOutcome = msg.outcome;
         coinFlipping = true;
         coinTime = 0;
         coinGroup.visible = true;
         audio.playCoinDesk();
-      } else if (msg.type === 'toss_choice_request') {
-        closeAllModals();
-        modalToss.classList.add('active');
-        document.getElementById('toss-decision-box').style.display = 'flex';
-        document.getElementById('toss-result-text').innerHTML = `🎉 YOU WON THE TOSS!<br>Choose to Bat or Bowl:`;
-        document.getElementById('toss-choose-row').style.display = 'flex';
-        document.getElementById('toss-call-row').style.display = 'none';
-        document.getElementById('btn-flip-coin').style.display = 'none';
+        document.getElementById('toss-instruction').innerHTML = `Host called <strong>${msg.hostCall.toUpperCase()}</strong>! Spinning coin on bench...`;
+      } else if (msg.type === 'toss_winner_result') {
+        window.openModal('modal-toss');
+        const decisionBox = document.getElementById('toss-decision-box');
+        const resultText = document.getElementById('toss-result-text');
+        const chooseRow = document.getElementById('toss-choose-row');
+        const btnStart = document.getElementById('btn-start-match');
+        decisionBox.style.display = 'flex';
+
+        if (msg.winner === 'friend') {
+          resultText.innerHTML = `Coin is <strong>${msg.outcome.toUpperCase()}</strong>!<br>🎉 YOU WON THE TOSS! Pick Bat or Bowl:`;
+          chooseRow.style.display = 'flex';
+          btnStart.style.display = 'none';
+        } else {
+          resultText.innerHTML = `Coin is <strong>${msg.outcome.toUpperCase()}</strong>.<br>Host won the toss! Waiting for Host to choose...`;
+          chooseRow.style.display = 'none';
+          btnStart.style.display = 'none';
+        }
       } else if (msg.type === 'client_chose_role') {
         GameState.userRole = (msg.clientRole === 'bat') ? 'bowl' : 'bat';
         startMatch();
-      } else if (msg.type === 'match_start') {
+      } else if (msg.type === 'start_match') {
         GameState.overs = msg.overs;
         GameState.wicketsLimit = msg.wicketsLimit;
         GameState.userRole = (msg.hostRole === 'bat') ? 'bowl' : 'bat';
@@ -1899,10 +2032,10 @@
           showBanner("FRIEND READY!", "Your friend threw! Pick your fingers!", "info", 0);
         }
       } else if (msg.type === 'start_innings_2') {
-        modalBreak.classList.remove('active');
+        window.closeAllModals();
         initInnings(2);
       } else if (msg.type === 'play_again') {
-        closeAllModals();
+        window.closeAllModals();
         GameState.isThrowing = false;
         renderHands(0, 0);
         setupMultiplayerRoles(mp.isHost);
