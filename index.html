@@ -1,0 +1,1862 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Classroom Hand Cricket - Online Multiplayer & Last Bench 🏫🏏</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Patrick+Hand&family=Permanent+Marker&family=Kalam:wght@700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --desk-wood: #5a3825;
+      --desk-dark: #3b2214;
+      --paper-bg: #fcfbf7;
+      --paper-line: #b0c4de;
+      --paper-margin: #e57373;
+      --ink-blue: #0d47a1;
+      --pencil-gray: #37474f;
+      --chalk-white: #ffffff;
+      --red-out: #c62828;
+      --gold-six: #f57f17;
+    }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+      touch-action: manipulation;
+    }
+    body, html {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #1a0f08;
+      font-family: 'Patrick Hand', cursive, sans-serif;
+      color: var(--pencil-gray);
+    }
+
+    /* Wooden Classroom Desk Background */
+    #classroom-scene {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: radial-gradient(circle at 50% 40%, #7c4d30 0%, #4a2818 70%, #29140a 100%);
+      box-shadow: inset 0 0 100px rgba(0,0,0,0.8);
+      overflow: hidden;
+      z-index: 1;
+    }
+
+    .desk-texture {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      background-image: 
+        repeating-linear-gradient(90deg, rgba(0,0,0,0.03) 0px, rgba(0,0,0,0.03) 2px, transparent 2px, transparent 8px),
+        linear-gradient(rgba(0,0,0,0.15) 1px, transparent 1px);
+      pointer-events: none;
+    }
+    .desk-scratch {
+      position: absolute;
+      color: rgba(255, 255, 255, 0.14);
+      font-family: 'Permanent Marker', cursive;
+      font-size: 18px;
+      pointer-events: none;
+      transform: rotate(-12deg);
+    }
+    .scratch-1 { top: 18%; left: 8%; }
+    .scratch-2 { bottom: 25%; right: 10%; font-size: 14px; transform: rotate(8deg); }
+    .scratch-3 { top: 40%; right: 6%; font-size: 20px; }
+
+    /* Desk Props */
+    .stationery-ruler {
+      position: absolute;
+      left: -20px;
+      top: 35%;
+      width: 50px;
+      height: 240px;
+      background: rgba(255, 255, 255, 0.2);
+      border-right: 2px solid rgba(0,0,0,0.25);
+      border-radius: 4px;
+      box-shadow: 4px 6px 12px rgba(0,0,0,0.4);
+      transform: rotate(6deg);
+      pointer-events: none;
+    }
+    .stationery-eraser {
+      position: absolute;
+      right: 18px;
+      top: 22%;
+      width: 52px;
+      height: 28px;
+      background: linear-gradient(90deg, #1976d2 50%, #d32f2f 50%);
+      border-radius: 4px;
+      box-shadow: 3px 5px 10px rgba(0,0,0,0.5);
+      transform: rotate(-18deg);
+      pointer-events: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 8px;
+      color: #fff;
+      font-weight: bold;
+    }
+
+    /* 3D Canvas for Coin Toss */
+    #canvas-container {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 2;
+      pointer-events: none;
+    }
+    #canvas3d {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    /* Main UI Layer */
+    #ui-layer {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 10;
+      pointer-events: none;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: max(10px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
+    }
+    .interactive {
+      pointer-events: auto;
+    }
+
+    /* School Khata / Ruled Notebook Scorecard */
+    .school-notebook {
+      background: var(--paper-bg);
+      border-radius: 8px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.6), 2px 3px 0 #d7d5cc;
+      max-width: 540px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 10px 16px 12px 32px;
+      position: relative;
+      background-image: 
+        repeating-linear-gradient(transparent, transparent 23px, var(--paper-line) 23px, var(--paper-line) 24px);
+      line-height: 24px;
+      border: 1px solid #d5d1c4;
+    }
+    .school-notebook::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 24px;
+      width: 2px;
+      background: var(--paper-margin);
+    }
+    .staple-hole {
+      position: absolute;
+      left: 8px;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #422a1d;
+      box-shadow: inset 1px 1px 2px rgba(0,0,0,0.8);
+    }
+    .staple-1 { top: 14px; }
+    .staple-2 { bottom: 14px; }
+
+    .notebook-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      border-bottom: 2px solid var(--paper-line);
+      padding-bottom: 2px;
+      margin-bottom: 4px;
+    }
+    .notebook-title {
+      font-family: 'Permanent Marker', cursive;
+      font-size: 18px;
+      color: var(--ink-blue);
+      letter-spacing: 0.5px;
+    }
+    .recess-tag {
+      font-size: 13px;
+      font-weight: bold;
+      color: #d32f2f;
+      background: #ffebee;
+      padding: 0 8px;
+      border-radius: 4px;
+      border: 1px dashed #e57373;
+    }
+
+    .notebook-score-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .team-handwritten {
+      font-family: 'Kalam', cursive;
+      font-size: 20px;
+      color: var(--ink-blue);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .pencil-role {
+      font-size: 13px;
+      color: #555;
+      font-style: italic;
+    }
+    .big-chalk-score {
+      font-family: 'Permanent Marker', cursive;
+      font-size: 36px;
+      color: #111;
+      line-height: 1;
+      display: flex;
+      align-items: baseline;
+      gap: 4px;
+    }
+    .big-chalk-score .overs-txt {
+      font-family: 'Patrick Hand', cursive;
+      font-size: 16px;
+      color: #666;
+    }
+    .target-box-ruled {
+      text-align: right;
+      font-size: 13px;
+      color: #c62828;
+      font-weight: bold;
+    }
+    .target-runs-big {
+      font-family: 'Permanent Marker', cursive;
+      font-size: 22px;
+      line-height: 1;
+    }
+
+    /* Ruled Over Tracker (Handwritten runs) */
+    .notebook-over-strip {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 4px;
+      font-size: 14px;
+      color: #444;
+    }
+    .ball-circle-pen {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      border: 1.5px solid var(--ink-blue);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Permanent Marker', cursive;
+      font-size: 13px;
+      color: var(--ink-blue);
+      background: #fff;
+    }
+    .ball-circle-pen.dot { border-color: #aaa; color: #aaa; }
+    .ball-circle-pen.four { border-color: #1565c0; background: #e3f2fd; color: #0d47a1; }
+    .ball-circle-pen.six { border-color: #f57f17; background: #fffde7; color: #e65100; font-weight: bold; }
+    .ball-circle-pen.out { border-color: #c62828; background: #ffebee; color: #b71c1c; }
+
+    /* The Hands Battle Arena */
+    #battle-stage {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-around;
+      align-items: center;
+      position: relative;
+      margin: 10px 0;
+    }
+    .hands-arena-container {
+      width: 100%;
+      max-width: 500px;
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      position: relative;
+    }
+    .hand-spot {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+    }
+    .hand-player-tag {
+      font-family: 'Permanent Marker', cursive;
+      font-size: 15px;
+      color: #fff;
+      background: rgba(0,0,0,0.55);
+      padding: 2px 12px;
+      border-radius: 12px;
+      letter-spacing: 0.5px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.4);
+    }
+    
+    .school-hand-card {
+      width: 140px;
+      height: 140px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 2px dashed rgba(255, 255, 255, 0.25);
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: inset 0 0 20px rgba(0,0,0,0.3), 0 8px 24px rgba(0,0,0,0.5);
+      transition: transform 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      position: relative;
+    }
+    .school-hand-card.shake {
+      animation: deskSlam 0.32s infinite alternate ease-in-out;
+    }
+    @keyframes deskSlam {
+      0% { transform: translateY(-16px) rotate(-3deg); }
+      100% { transform: translateY(8px) rotate(3deg); }
+    }
+    .school-hand-card svg {
+      width: 110px;
+      height: 110px;
+      filter: drop-shadow(2px 6px 8px rgba(0,0,0,0.6));
+    }
+
+    /* Center Chalkboard Announcements */
+    #announcement-chalk {
+      text-align: center;
+      pointer-events: none;
+    }
+    .chalk-shout {
+      font-family: 'Permanent Marker', cursive;
+      font-size: 52px;
+      color: var(--chalk-white);
+      text-shadow: 0 0 10px rgba(255,255,255,0.8), 2px 4px 6px rgba(0,0,0,0.9);
+      line-height: 1;
+      transform: scale(0);
+      transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    .chalk-shout.show {
+      transform: scale(1);
+    }
+    .chalk-shout.out {
+      color: #ff5252;
+      text-shadow: 0 0 16px rgba(255,82,82,0.9);
+    }
+    .chalk-shout.six {
+      color: #ffd700;
+      text-shadow: 0 0 16px rgba(255,215,0,0.9);
+    }
+    .chalk-shout.four {
+      color: #40c4ff;
+    }
+    .chalk-whisper {
+      font-size: 15px;
+      color: #ffecb3;
+      background: rgba(0,0,0,0.6);
+      padding: 2px 14px;
+      border-radius: 12px;
+      margin-top: 4px;
+    }
+
+    /* Desk Action Pad (Finger Buttons 1 to 6) */
+    .desk-controls-wrap {
+      max-width: 540px;
+      width: 100%;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .controls-chalk-hint {
+      text-align: center;
+      font-size: 14px;
+      color: #ffecb3;
+      font-weight: bold;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+    }
+    .desk-buttons-grid {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 8px;
+    }
+    .wood-btn {
+      background: linear-gradient(180deg, #fdfbf7 0%, #ede8dc 100%);
+      border: 2px solid #8d6e63;
+      border-radius: 12px;
+      padding: 8px 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 6px 0 #5d4037, 0 8px 15px rgba(0,0,0,0.5);
+      transition: all 0.08s ease;
+      outline: none;
+      -webkit-tap-highlight-color: transparent;
+      color: #2e1c11;
+    }
+    .wood-btn:hover {
+      background: #fff;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 0 #5d4037, 0 10px 18px rgba(0,0,0,0.6);
+    }
+    .wood-btn:active {
+      transform: translateY(4px);
+      box-shadow: 0 2px 0 #5d4037, 0 4px 8px rgba(0,0,0,0.5);
+    }
+    .wood-btn.disabled {
+      opacity: 0.4;
+      pointer-events: none;
+      box-shadow: 0 2px 0 #5d4037;
+      transform: translateY(4px);
+    }
+    .wood-btn .btn-num-chalk {
+      font-family: 'Permanent Marker', cursive;
+      font-size: 26px;
+      line-height: 1;
+    }
+    .wood-btn .btn-fingers-hint {
+      font-size: 11px;
+      font-weight: bold;
+      color: #5d4037;
+    }
+
+    /* Top Corner Icons */
+    .top-desk-tools {
+      position: absolute;
+      top: 10px;
+      right: 12px;
+      display: flex;
+      gap: 8px;
+      z-index: 30;
+    }
+    .tool-icon-btn {
+      padding: 6px 12px;
+      border-radius: 20px;
+      background: rgba(46, 28, 17, 0.85);
+      border: 1.5px solid #a1887f;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+    }
+
+    /* School Notebook Modals */
+    .school-modal-backdrop {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(18, 9, 4, 0.88);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease;
+    }
+    .school-modal-backdrop.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .notebook-popup-card {
+      background: var(--paper-bg);
+      border: 2px solid #5d4037;
+      border-radius: 12px;
+      max-width: 440px;
+      width: 100%;
+      padding: 22px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8), 4px 6px 0 #5d4037;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      position: relative;
+      background-image: repeating-linear-gradient(transparent, transparent 25px, var(--paper-line) 25px, var(--paper-line) 26px);
+      line-height: 26px;
+    }
+    .popup-title {
+      font-family: 'Permanent Marker', cursive;
+      font-size: 26px;
+      color: #b71c1c;
+      letter-spacing: 0.5px;
+    }
+    .popup-sub {
+      font-size: 15px;
+      color: #37474f;
+      line-height: 1.4;
+    }
+
+    .school-chips-row {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+    }
+    .school-chip-btn {
+      flex: 1;
+      padding: 8px 6px;
+      border-radius: 8px;
+      background: #fff;
+      border: 1.5px solid #8d6e63;
+      font-family: 'Patrick Hand', cursive;
+      font-size: 15px;
+      font-weight: bold;
+      color: #3e2723;
+      cursor: pointer;
+      box-shadow: 0 3px 0 #8d6e63;
+      transition: all 0.1s;
+    }
+    .school-chip-btn.selected, .school-chip-btn:hover {
+      background: #ffe082;
+      border-color: #e65100;
+      color: #bf360c;
+      transform: translateY(-1px);
+    }
+    .school-action-btn {
+      background: linear-gradient(180deg, #d32f2f 0%, #b71c1c 100%);
+      color: #fff;
+      border: 2px solid #5d4037;
+      padding: 10px 18px;
+      border-radius: 10px;
+      font-family: 'Permanent Marker', cursive;
+      font-size: 18px;
+      letter-spacing: 0.5px;
+      cursor: pointer;
+      box-shadow: 0 5px 0 #5d4037, 0 8px 20px rgba(0,0,0,0.4);
+      transition: all 0.1s;
+    }
+    .school-action-btn.green {
+      background: linear-gradient(180deg, #388e3c 0%, #1b5e20 100%);
+    }
+    .school-action-btn:active {
+      transform: translateY(3px);
+      box-shadow: 0 2px 0 #5d4037;
+    }
+
+    /* Multiplayer Room Code Pill */
+    .room-code-display {
+      background: #fff;
+      border: 2px dashed #b71c1c;
+      border-radius: 8px;
+      padding: 8px;
+      font-family: 'Permanent Marker', cursive;
+      font-size: 24px;
+      color: #0d47a1;
+      letter-spacing: 3px;
+      cursor: pointer;
+    }
+    .room-input {
+      font-family: 'Permanent Marker', cursive;
+      font-size: 20px;
+      text-align: center;
+      padding: 6px;
+      border-radius: 8px;
+      border: 2px solid #5d4037;
+      background: #fff;
+      width: 100%;
+      text-transform: uppercase;
+      outline: none;
+    }
+
+    /* Mobile Tweaks */
+    @media (max-width: 480px) {
+      .school-notebook { padding: 8px 12px 10px 28px; }
+      .school-notebook::before { left: 20px; }
+      .big-chalk-score { font-size: 30px; }
+      .school-hand-card { width: 120px; height: 120px; }
+      .school-hand-card svg { width: 95px; height: 95px; }
+      .chalk-shout { font-size: 38px; }
+      .wood-btn { padding: 6px 0; border-radius: 8px; }
+      .wood-btn .btn-num-chalk { font-size: 22px; }
+      .desk-buttons-grid { gap: 6px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Wooden Classroom Desk Background -->
+  <div id="classroom-scene">
+    <div class="desk-texture"></div>
+    <div class="desk-scratch scratch-1">✏️ Class 8B • Recess Match</div>
+    <div class="desk-scratch scratch-2">Tiffin Time Cricket!</div>
+    <div class="desk-scratch scratch-3">Last Bencher 🏏</div>
+    
+    <div class="stationery-ruler"></div>
+    <div class="stationery-eraser">APOLLO</div>
+  </div>
+
+  <!-- 3D Coin Toss Canvas -->
+  <div id="canvas-container">
+    <canvas id="canvas3d"></canvas>
+  </div>
+
+  <!-- Top Utilities -->
+  <div class="top-desk-tools interactive">
+    <button id="btn-mode-indicator" class="tool-icon-btn">🎮 Solo Mode</button>
+    <button id="btn-sound" class="tool-icon-btn" title="Toggle Sound">🔊</button>
+  </div>
+
+  <!-- UI Overlay -->
+  <div id="ui-layer">
+    <!-- School Ruled Khata / Notebook Scorecard -->
+    <div class="school-notebook interactive">
+      <div class="staple-hole staple-1"></div>
+      <div class="staple-hole staple-2"></div>
+
+      <div class="notebook-header">
+        <div class="notebook-title">📖 TIFFIN PERIOD HAND CRICKET</div>
+        <div class="recess-tag" id="match-status-tag">1ST INNINGS</div>
+      </div>
+
+      <div class="notebook-score-row">
+        <div>
+          <div class="team-handwritten">
+            <span id="player-label-score">YOU</span>
+            <span class="pencil-role" id="role-text">(Batting)</span>
+          </div>
+        </div>
+
+        <div class="big-chalk-score">
+          <span id="runs-display">0</span>/<span id="wickets-display">0</span>
+          <span class="overs-txt">(<span id="overs-display">0.0</span>/<span id="max-overs-display">2.0</span> ov)</span>
+        </div>
+
+        <div class="target-box-ruled" id="target-block" style="display:none;">
+          <div>TARGET: <span class="target-runs-big" id="target-display">0</span></div>
+          <div id="chase-equation" style="font-size:12px; color:#555;">Need 0 in 0b</div>
+        </div>
+      </div>
+
+      <!-- Over Timeline -->
+      <div class="notebook-over-strip" id="timeline-strip">
+        <span style="font-weight:bold;">THIS OVER:</span>
+        <span class="ball-circle-pen dot">•</span>
+      </div>
+    </div>
+
+    <!-- Center Battle Arena: Student Hands on Wooden Desk -->
+    <div id="battle-stage">
+      <div id="announcement-chalk">
+        <div class="chalk-shout" id="banner-text">READY!</div>
+        <div class="chalk-whisper" id="banner-sub" style="display:none;">Throw on desk!</div>
+      </div>
+
+      <div class="hands-arena-container">
+        <!-- Player Hand on Desk -->
+        <div class="hand-spot">
+          <div class="hand-player-tag" id="label-player-hand">YOU (Your Throw)</div>
+          <div class="school-hand-card" id="player-hand-card">
+            <svg id="player-hand-svg" viewBox="0 0 100 100"></svg>
+          </div>
+        </div>
+
+        <!-- VS Badge -->
+        <div style="font-family:'Permanent Marker', cursive; font-size:24px; color:rgba(255,255,255,0.7); text-shadow:0 2px 6px rgba(0,0,0,0.8);">VS</div>
+
+        <!-- Opponent Hand on Desk -->
+        <div class="hand-spot">
+          <div class="hand-player-tag" id="label-ai-hand">FRIEND (AI)</div>
+          <div class="school-hand-card" id="ai-hand-card">
+            <svg id="ai-hand-svg" viewBox="0 0 100 100"></svg>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom Action Pad (Wooden Desk Buttons 1 to 6) -->
+    <div class="desk-controls-wrap interactive">
+      <div class="controls-chalk-hint" id="controls-hint">👉 SHOW YOUR FINGERS (PRESS 1 - 6):</div>
+      <div class="desk-buttons-grid">
+        <button class="wood-btn" data-num="1"><span class="btn-num-chalk">1</span><span class="btn-fingers-hint">One ☝️</span></button>
+        <button class="wood-btn" data-num="2"><span class="btn-num-chalk">2</span><span class="btn-fingers-hint">Two ✌️</span></button>
+        <button class="wood-btn" data-num="3"><span class="btn-num-chalk">3</span><span class="btn-fingers-hint">Three 🤟</span></button>
+        <button class="wood-btn" data-num="4"><span class="btn-num-chalk">4</span><span class="btn-fingers-hint">Four 🖖</span></button>
+        <button class="wood-btn" data-num="5"><span class="btn-num-chalk">5</span><span class="btn-fingers-hint">Five 🖐️</span></button>
+        <button class="wood-btn" data-num="6"><span class="btn-num-chalk">6</span><span class="btn-fingers-hint">Six! 👍</span></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- POPUP 1: MATCH MODE & SETTINGS -->
+  <div class="school-modal-backdrop active" id="modal-settings">
+    <div class="notebook-popup-card">
+      <h2 class="popup-title">🏏 LAST BENCH CRICKET</h2>
+      <p class="popup-sub">"Tiffin time match! Teacher isn't looking. Play solo vs clever AI or invite a friend online!"</p>
+      
+      <div>
+        <div style="font-size:13px; font-weight:bold; color:#795548; margin-bottom:4px;">GAME MODE</div>
+        <div class="school-chips-row" id="mode-select">
+          <button class="school-chip-btn selected" data-val="solo">🤖 Solo vs AI</button>
+          <button class="school-chip-btn" data-val="multiplayer">🌐 2-Player Online</button>
+        </div>
+      </div>
+
+      <!-- Solo Options -->
+      <div id="solo-options-box">
+        <div style="font-size:13px; font-weight:bold; color:#795548; margin:6px 0 4px;">HOW MANY OVERS?</div>
+        <div class="school-chips-row" id="overs-select">
+          <button class="school-chip-btn selected" data-val="1">1 Over</button>
+          <button class="school-chip-btn" data-val="2">2 Overs</button>
+          <button class="school-chip-btn" data-val="5">5 Overs</button>
+        </div>
+
+        <div style="font-size:13px; font-weight:bold; color:#795548; margin:6px 0 4px;">HOW MANY WICKETS?</div>
+        <div class="school-chips-row" id="wickets-select">
+          <button class="school-chip-btn selected" data-val="1">1 Out</button>
+          <button class="school-chip-btn" data-val="3">3 Outs</button>
+        </div>
+
+        <div style="font-size:13px; font-weight:bold; color:#795548; margin:6px 0 4px;">BENCHMATE DIFFICULTY</div>
+        <div class="school-chips-row" id="diff-select">
+          <button class="school-chip-btn" data-val="easy">Normal</button>
+          <button class="school-chip-btn selected" data-val="pro">Clever</button>
+          <button class="school-chip-btn" data-val="legend">Pro Bencher</button>
+        </div>
+
+        <button class="school-action-btn" id="btn-start-toss" style="margin-top:10px; width:100%;">🪙 Flip Coin On Desk!</button>
+      </div>
+
+      <!-- Online Multiplayer Options -->
+      <div id="multiplayer-options-box" style="display:none; flex-direction:column; gap:8px;">
+        <button class="school-action-btn green" id="btn-create-room">Create Room (Host)</button>
+        <div style="font-size:12px; font-weight:bold; color:#777;">— OR JOIN FRIEND —</div>
+        <input type="text" class="room-input" id="input-join-code" placeholder="ENTER 4-DIGIT CODE" maxlength="6">
+        <button class="school-action-btn" id="btn-join-room">Join Room 🚀</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- POPUP: WAITING FOR FRIEND (Host Room Screen) -->
+  <div class="school-modal-backdrop" id="modal-waiting-peer">
+    <div class="notebook-popup-card">
+      <h2 class="popup-title">📡 ROOM CREATED!</h2>
+      <p class="popup-sub">Share this Room Code or link with your friend to play in real-time:</p>
+      
+      <div class="room-code-display" id="display-room-code">WAITING...</div>
+      <button class="school-chip-btn" id="btn-copy-link" style="padding:6px 12px; font-size:13px;">📋 Copy Invite Link</button>
+
+      <div style="font-size:13px; color:#555; margin-top:8px;" id="waiting-status-text">
+        ⏳ Waiting for friend to join the desk...
+      </div>
+      <button class="school-chip-btn" id="btn-cancel-waiting" style="margin-top:6px;">Cancel</button>
+    </div>
+  </div>
+
+  <!-- POPUP 2: 3D COIN TOSS -->
+  <div class="school-modal-backdrop" id="modal-toss">
+    <div class="notebook-popup-card">
+      <h2 class="popup-title">🪙 TOSS KOR!</h2>
+      <p class="popup-sub" id="toss-instruction">Call Head or Tail before we flip the coin on the school desk!</p>
+      
+      <div class="school-chips-row" id="toss-call-row">
+        <button class="school-chip-btn selected" id="call-heads">🪙 HEAD (BAT)</button>
+        <button class="school-chip-btn" id="call-tails">🪙 TAIL (BALL)</button>
+      </div>
+
+      <button class="school-action-btn" id="btn-flip-coin">Spin Coin! 🌀</button>
+
+      <div id="toss-decision-box" style="display:none; flex-direction:column; gap:10px;">
+        <div id="toss-result-text" style="font-size:16px; font-weight:bold; color:#d32f2f; line-height:1.4;"></div>
+        <div class="school-chips-row" id="toss-choose-row">
+          <button class="school-chip-btn selected" id="choose-bat">🏏 I WILL BAT</button>
+          <button class="school-chip-btn" id="choose-bowl">⚾ I WILL BOWL</button>
+        </div>
+        <button class="school-action-btn" id="btn-start-match" style="display:none;">Start Match! 🚀</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- POPUP 3: INNINGS BREAK -->
+  <div class="school-modal-backdrop" id="modal-break">
+    <div class="notebook-popup-card">
+      <h2 class="popup-title">⏸️ INNINGS OVER!</h2>
+      <p class="popup-sub" id="break-summary-text"></p>
+      <div style="background:#fff; border:1.5px dashed #b71c1c; padding:12px; border-radius:8px;">
+        <div style="font-size:13px; color:#555;">TARGET TO CHASE</div>
+        <div style="font-family:'Permanent Marker', cursive; font-size:42px; line-height:1; color:#d32f2f;" id="break-target-num">0</div>
+        <div style="font-size:14px; color:#0d47a1; font-weight:bold;" id="break-equation">Need 0 in 0 balls</div>
+      </div>
+      <button class="school-action-btn" id="btn-start-innings2">Start Chase! 🔥</button>
+    </div>
+  </div>
+
+  <!-- POPUP 4: GAME OVER -->
+  <div class="school-modal-backdrop" id="modal-gameover">
+    <div class="notebook-popup-card">
+      <h2 class="popup-title" id="gameover-title">🏆 YOU WON!</h2>
+      <p class="popup-sub" id="gameover-subtitle"></p>
+      
+      <div style="background:#fff; border:1px solid #d7ccc8; padding:14px; border-radius:8px; display:flex; justify-content:space-around;">
+        <div>
+          <div style="font-size:12px; color:#666;" id="go-player-label">YOUR SCORE</div>
+          <div style="font-family:'Permanent Marker', cursive; font-size:28px; color:#0d47a1;" id="final-player-score">0/0</div>
+        </div>
+        <div style="width:1px; background:#ccc;"></div>
+        <div>
+          <div style="font-size:12px; color:#666;" id="go-ai-label">FRIEND'S SCORE</div>
+          <div style="font-family:'Permanent Marker', cursive; font-size:28px; color:#d32f2f;" id="final-ai-score">0/0</div>
+        </div>
+      </div>
+
+      <button class="school-action-btn" id="btn-play-again">Play Rematch! 🔄</button>
+    </div>
+  </div>
+
+  <!-- Three.js (3D Coin Toss) & PeerJS (Free WebRTC Multiplayer) -->
+  <script src="three.min.js"></script>
+  <script>
+    if (typeof THREE === 'undefined') {
+      document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"><\/script>');
+    }
+  </script>
+  <script src="peerjs.min.js"></script>
+  <script>
+    if (typeof Peer === 'undefined') {
+      document.write('<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"><\/script>');
+    }
+  </script>
+
+  <script>
+    /* ==========================================================
+       1. SCHOOL NOSTALGIA AUDIO (Desk Knocks, School Bell, Coin)
+       ========================================================== */
+    class SchoolAudioEngine {
+      constructor() {
+        this.ctx = null;
+        this.enabled = true;
+      }
+      init() {
+        if (!this.ctx) {
+          const AudioContext = window.AudioContext || window.webkitAudioContext;
+          this.ctx = new AudioContext();
+        }
+        if (this.ctx.state === 'suspended') {
+          this.ctx.resume();
+        }
+      }
+      playDeskThud() {
+        if (!this.enabled || !this.ctx) return;
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(140, now);
+        osc.frequency.exponentialRampToValueAtTime(30, now + 0.12);
+        gain.gain.setValueAtTime(0.7, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.14);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.14);
+      }
+      playCoinDesk() {
+        if (!this.enabled || !this.ctx) return;
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(2100, now);
+        osc.frequency.exponentialRampToValueAtTime(3200, now + 0.1);
+        gain.gain.setValueAtTime(0.4, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.3);
+      }
+      playSchoolBell() {
+        if (!this.enabled || !this.ctx) return;
+        for (let i = 0; i < 3; i++) {
+          setTimeout(() => {
+            if (!this.ctx) return;
+            const t = this.ctx.currentTime;
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(880, t);
+            gain.gain.setValueAtTime(0.3, t);
+            gain.gain.exponentialRampToValueAtTime(0.001, t + 0.4);
+            osc.connect(gain);
+            gain.connect(this.ctx.destination);
+            osc.start(t);
+            osc.stop(t + 0.4);
+          }, i * 220);
+        }
+      }
+      playOutShout() {
+        if (!this.enabled || !this.ctx) return;
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(360, now);
+        osc.frequency.exponentialRampToValueAtTime(80, now + 0.4);
+        gain.gain.setValueAtTime(0.5, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.45);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.45);
+      }
+      playSixCheer() {
+        if (!this.enabled || !this.ctx) return;
+        this.playDeskThud();
+        setTimeout(() => this.playDeskThud(), 80);
+        setTimeout(() => this.playDeskThud(), 160);
+      }
+    }
+    const audio = new SchoolAudioEngine();
+
+    /* ==========================================================
+       2. ORGANIC HUMAN SCHOOL HAND ENGINE (SVG)
+       ========================================================== */
+    function getSchoolHandSvg(gestureNum, isPlayer) {
+      const skinColor = isPlayer ? "#e0a184" : "#d08b68";
+      const skinShadow = isPlayer ? "#c48366" : "#b26e4e";
+      const cuffColor = isPlayer ? "#ffffff" : "#1a237e";
+      const sleeveBorder = isPlayer ? "#cfd8dc" : "#0d47a1";
+
+      let fingersSvg = '';
+
+      if (gestureNum === 1) {
+        fingersSvg = `
+          <ellipse cx="50" cy="52" rx="18" ry="14" fill="${skinShadow}" />
+          <path d="M 32 50 C 35 42, 55 42, 58 48 C 55 56, 35 56, 32 50 Z" fill="${skinColor}" stroke="${skinShadow}" stroke-width="1.5" />
+          <path d="M 43 50 L 43 14 C 43 9, 53 9, 53 14 L 53 50 Z" fill="${skinColor}" stroke="${skinShadow}" stroke-width="1.5" />
+          <ellipse cx="48" cy="15" rx="3.5" ry="3" fill="#ffe0b2" opacity="0.8" />
+          <line x1="44" y1="26" x2="52" y2="26" stroke="${skinShadow}" stroke-width="1" />
+          <line x1="44" y1="38" x2="52" y2="38" stroke="${skinShadow}" stroke-width="1" />
+        `;
+      } else if (gestureNum === 2) {
+        fingersSvg = `
+          <ellipse cx="50" cy="54" rx="18" ry="14" fill="${skinShadow}" />
+          <path d="M 32 50 C 35 42, 55 42, 58 48 C 55 56, 35 56, 32 50 Z" fill="${skinColor}" stroke="${skinShadow}" stroke-width="1.5" />
+          <path d="M 38 50 L 32 15 C 30 10, 40 7, 43 12 L 47 50 Z" fill="${skinColor}" stroke="${skinShadow}" stroke-width="1.5" />
+          <path d="M 49 50 L 55 12 C 58 7, 68 10, 66 15 L 59 50 Z" fill="${skinColor}" stroke="${skinShadow}" stroke-width="1.5" />
+          <ellipse cx="36" cy="13" rx="3.5" ry="3" fill="#ffe0b2" opacity="0.8" />
+          <ellipse cx="61" cy="13" rx="3.5" ry="3" fill="#ffe0b2" opacity="0.8" />
+        `;
+      } else if (gestureNum === 3) {
+        fingersSvg = `
+          <ellipse cx="50" cy="54" rx="18" ry="14" fill="${skinShadow}" />
+          <path d="M 30 52 C 34 44, 52 44, 56 50 C 52 58, 32 58, 30 52 Z" fill="${skinColor}" stroke="${skinShadow}" stroke-width="1.5" />
+          <path d="M 34 50 L 28 17 C 26 12, 36 9, 39 14 L 42 50 Z" fill="${skinColor}" stroke="${skinShadow}" stroke-width="1.5" />
+          <path d="M 43 50 L 48 12 C 50 7, 60 7, 59 12 L 54 50 Z" fill="${skinColor}" stroke="${skinShadow}" stroke-width="1.5" />
+          <path d="M 55 50 L 64 16 C 66 11, 75 14, 73 19 L 65 50 Z" fill="${skinColor}" stroke="${skinShadow}" stroke-width="1.5" />
+        `;
+      } else if (gestureNum === 4) {
+        fingersSvg = `
+          <ellipse cx="50" cy="55" rx="19" ry="13" fill="${skinShadow}" />
+          <path d="M 28 54 C 32 46, 48 46, 52 52 C 48 58, 30 58, 28 54 Z" fill="${skinColor}" stroke="${skinShadow}" stroke-width="1.5" />
+          <path d="M 26 50 L 20 20 C 18 15, 27 12, 30 17 L 34 50 Z" fill="${skinColor}" stroke="${skinShadow}" stroke-width="1.5" />
+          <path d="M 36 50 L 38 14 C 39 9, 48 9, 48 14 L 46 50 Z" fill="${skinColor}" stroke="${skinShadow}" stroke-width="1.5" />
+          <path d="M 48 50 L 54 13 C 55 8, 64 8, 64 13 L 58 50 Z" fill="${skinColor}" stroke="${skinShadow}" stroke-width="1.5" />
+          <path d="M 60 50 L 72 18 C 74 13, 82 17, 80 22 L 68 50 Z" fill="${skinColor}" stroke="${skinShadow}" stroke-width="1.5" />
+        `;
+      } else if (gestureNum === 5) {
+        fingersSvg = `
+          <path d="M 28 56 L 10 38 C 6 34, 13 28, 17 32 L 32 50 Z" fill="${skinColor}" stroke="${skinShadow}" stroke-width="1.5" />
+          <ellipse cx="14" cy="34" rx="3.5" ry="3" fill="#ffe0b2" opacity="0.8" />
+          <path d="M 28 50 L 22 17 C 20 12, 29 9, 32 14 L 36 50 Z" fill="${skinColor}" stroke="${skinShadow}" stroke-width="1.5" />
+          <path d="M 38 50 L 40 12 C 41 7, 50 7, 50 12 L 48 50 Z" fill="${skinColor}" stroke="${skinShadow}" stroke-width="1.5" />
+          <path d="M 50 50 L 58 11 C 60 6, 68 7, 68 12 L 60 50 Z" fill="${skinColor}" stroke="${skinShadow}" stroke-width="1.5" />
+          <path d="M 62 50 L 76 16 C 79 12, 86 16, 84 21 L 70 50 Z" fill="${skinColor}" stroke="${skinShadow}" stroke-width="1.5" />
+        `;
+      } else if (gestureNum === 6) {
+        fingersSvg = `
+          <path d="M 34 46 C 34 38, 70 38, 70 46 C 72 58, 32 58, 34 46 Z" fill="${skinShadow}" />
+          <ellipse cx="40" cy="46" rx="6" ry="7" fill="${skinColor}" stroke="${skinShadow}" stroke-width="1.5" />
+          <ellipse cx="50" cy="45" rx="6" ry="7" fill="${skinColor}" stroke="${skinShadow}" stroke-width="1.5" />
+          <ellipse cx="60" cy="46" rx="6" ry="7" fill="${skinColor}" stroke="${skinShadow}" stroke-width="1.5" />
+          <ellipse cx="69" cy="48" rx="5" ry="6" fill="${skinColor}" stroke="${skinShadow}" stroke-width="1.5" />
+          <path d="M 34 50 L 22 28 C 19 22, 28 17, 33 22 L 42 46 Z" fill="${skinColor}" stroke="${skinShadow}" stroke-width="1.5" />
+          <ellipse cx="27" cy="23" rx="4" ry="3.5" fill="#ffe0b2" opacity="0.8" />
+        `;
+      } else {
+        fingersSvg = `
+          <ellipse cx="50" cy="46" rx="22" ry="16" fill="${skinShadow}" />
+          <ellipse cx="37" cy="44" rx="7" ry="8" fill="${skinColor}" stroke="${skinShadow}" stroke-width="1.5" />
+          <ellipse cx="48" cy="42" rx="7" ry="8.5" fill="${skinColor}" stroke="${skinShadow}" stroke-width="1.5" />
+          <ellipse cx="59" cy="44" rx="7" ry="8" fill="${skinColor}" stroke="${skinShadow}" stroke-width="1.5" />
+          <ellipse cx="69" cy="47" rx="5.5" ry="6.5" fill="${skinColor}" stroke="${skinShadow}" stroke-width="1.5" />
+          <path d="M 30 52 C 32 40, 56 40, 62 46 C 58 56, 32 58, 30 52 Z" fill="${skinColor}" stroke="${skinShadow}" stroke-width="1.5" />
+        `;
+      }
+
+      return `
+        <path d="M 30 50 C 26 62, 28 72, 30 76 L 70 76 C 72 72, 74 62, 70 50 Z" fill="${skinColor}" />
+        ${fingersSvg}
+        <path d="M 38 60 Q 50 64 62 58" stroke="${skinShadow}" stroke-width="1.2" fill="none" />
+        <rect x="22" y="74" width="56" height="20" rx="3" fill="${cuffColor}" stroke="${sleeveBorder}" stroke-width="1.8" />
+        <circle cx="68" cy="84" r="3" fill="${isPlayer ? '#78909c' : '#ffd700'}" />
+      `;
+    }
+
+    const playerSvg = document.getElementById('player-hand-svg');
+    const aiSvg = document.getElementById('ai-hand-svg');
+    const playerHandCard = document.getElementById('player-hand-card');
+    const aiHandCard = document.getElementById('ai-hand-card');
+
+    function renderHands(playerNum, aiNum) {
+      playerSvg.innerHTML = getSchoolHandSvg(playerNum, true);
+      aiSvg.innerHTML = getSchoolHandSvg(aiNum, false);
+    }
+    renderHands(0, 0);
+
+    /* ==========================================================
+       3. THREE.JS 3D COIN TOSS (On Wooden Desk)
+       ========================================================== */
+    const canvas = document.getElementById('canvas3d');
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(40, window.innerWidth / window.innerHeight, 0.1, 50);
+    camera.position.set(0, 4.2, 5.2);
+    camera.lookAt(0, 0.5, 0);
+
+    const renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, alpha: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+    const ambLight = new THREE.AmbientLight(0xffeedd, 0.9);
+    scene.add(ambLight);
+
+    const sun = new THREE.DirectionalLight(0xffffff, 1.2);
+    sun.position.set(4, 8, 4);
+    scene.add(sun);
+
+    function createDeskCoinTexture(text, isBat) {
+      const c = document.createElement('canvas');
+      c.width = 256;
+      c.height = 256;
+      const ctx = c.getContext('2d');
+      const grad = ctx.createRadialGradient(128, 128, 20, 128, 128, 128);
+      grad.addColorStop(0, '#f5e08b');
+      grad.addColorStop(0.7, '#cba135');
+      grad.addColorStop(1, '#7a5a12');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, 256, 256);
+      ctx.lineWidth = 14;
+      ctx.strokeStyle = '#faeaab';
+      ctx.beginPath();
+      ctx.arc(128, 128, 114, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.font = '78px Arial';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(isBat ? '🏏' : '⚾', 128, 92);
+      ctx.font = 'bold 36px "Permanent Marker", sans-serif';
+      ctx.fillStyle = '#3a2700';
+      ctx.fillText(text, 128, 178);
+      return new THREE.CanvasTexture(c);
+    }
+
+    const coinGroup = new THREE.Group();
+    const coinGeo = new THREE.CylinderGeometry(0.85, 0.85, 0.1, 32);
+    const headsTex = createDeskCoinTexture('HEAD', true);
+    const tailsTex = createDeskCoinTexture('TAIL', false);
+    const edgeMat = new THREE.MeshStandardMaterial({ color: 0xb8860b, metalness: 0.8, roughness: 0.3 });
+    const coinMaterials = [
+      edgeMat,
+      new THREE.MeshStandardMaterial({ map: headsTex, metalness: 0.65, roughness: 0.35 }),
+      new THREE.MeshStandardMaterial({ map: tailsTex, metalness: 0.65, roughness: 0.35 })
+    ];
+    const coinMesh = new THREE.Mesh(coinGeo, coinMaterials);
+    coinGroup.add(coinMesh);
+    coinGroup.position.set(0, 1.2, 0);
+    coinGroup.visible = false;
+    scene.add(coinGroup);
+
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    /* ==========================================================
+       4. MULTIPLAYER WEBRTC ENGINE (PeerJS - 100% Free & Serverless)
+       ========================================================== */
+    class MultiplayerEngine {
+      constructor() {
+        this.peer = null;
+        this.conn = null;
+        this.isHost = false;
+        this.roomId = null;
+        this.connected = false;
+        this.remoteThrow = null;
+        this.localThrow = null;
+      }
+      initHost(onReady, onConnected, onData) {
+        this.isHost = true;
+        // Generate random 4-character classroom code
+        const code = 'CRIC' + Math.floor(1000 + Math.random() * 9000);
+        this.roomId = code;
+        this.peer = new Peer(code);
+
+        this.peer.on('open', id => {
+          onReady(id);
+        });
+
+        this.peer.on('connection', c => {
+          this.conn = c;
+          this.setupConn(onConnected, onData);
+        });
+
+        this.peer.on('error', err => {
+          console.error('PeerJS error:', err);
+        });
+      }
+      initJoin(roomId, onConnected, onData, onError) {
+        this.isHost = false;
+        this.roomId = roomId.toUpperCase().trim();
+        this.peer = new Peer();
+
+        this.peer.on('open', () => {
+          this.conn = this.peer.connect(this.roomId);
+          this.setupConn(onConnected, onData);
+        });
+
+        this.peer.on('error', err => {
+          if (onError) onError(err);
+        });
+      }
+      setupConn(onConnected, onData) {
+        this.conn.on('open', () => {
+          this.connected = true;
+          onConnected();
+        });
+        this.conn.on('data', data => {
+          onData(data);
+        });
+        this.conn.on('close', () => {
+          this.connected = false;
+          alert('Friend disconnected from classroom desk!');
+        });
+      }
+      send(data) {
+        if (this.conn && this.connected) {
+          this.conn.send(data);
+        }
+      }
+    }
+    const mp = new MultiplayerEngine();
+
+    /* ==========================================================
+       5. GAME STATE & NOSTALGIC RULES
+       ========================================================== */
+    const GameState = {
+      mode: 'solo', // 'solo' or 'multiplayer'
+      overs: 1,
+      wicketsLimit: 1,
+      difficulty: 'pro',
+      userRole: 'bat',
+      currentInnings: 1,
+      isThrowing: false,
+      userCall: 'heads',
+      tossWinner: null,
+      firstInningsScore: 0,
+      firstInningsWickets: 0,
+      target: 0,
+      
+      runs: 0,
+      wickets: 0,
+      balls: 0,
+      historyThisOver: [],
+      playerThrowsHistory: [],
+      aiThrowsHistory: []
+    };
+
+    // DOM Elements
+    const runsDisplay = document.getElementById('runs-display');
+    const wicketsDisplay = document.getElementById('wickets-display');
+    const oversDisplay = document.getElementById('overs-display');
+    const maxOversDisplay = document.getElementById('max-overs-display');
+    const roleText = document.getElementById('role-text');
+    const matchStatusTag = document.getElementById('match-status-tag');
+    const targetBlock = document.getElementById('target-block');
+    const targetDisplay = document.getElementById('target-display');
+    const chaseEquation = document.getElementById('chase-equation');
+    const timelineStrip = document.getElementById('timeline-strip');
+    const bannerText = document.getElementById('banner-text');
+    const bannerSub = document.getElementById('banner-sub');
+    const throwButtons = document.querySelectorAll('.wood-btn');
+    const btnModeIndicator = document.getElementById('btn-mode-indicator');
+    const labelPlayerHand = document.getElementById('label-player-hand');
+    const labelAiHand = document.getElementById('label-ai-hand');
+    const playerLabelScore = document.getElementById('player-label-score');
+
+    // Modals
+    const modalSettings = document.getElementById('modal-settings');
+    const modalToss = document.getElementById('modal-toss');
+    const modalBreak = document.getElementById('modal-break');
+    const modalGameOver = document.getElementById('modal-gameover');
+    const modalWaitingPeer = document.getElementById('modal-waiting-peer');
+
+    document.getElementById('btn-sound').addEventListener('click', function() {
+      audio.enabled = !audio.enabled;
+      this.textContent = audio.enabled ? '🔊' : '🔇';
+    });
+
+    // Mode Toggle (Solo vs Multiplayer)
+    const soloOptionsBox = document.getElementById('solo-options-box');
+    const multiplayerOptionsBox = document.getElementById('multiplayer-options-box');
+    bindChips('mode-select', mode => {
+      GameState.mode = mode;
+      if (mode === 'solo') {
+        soloOptionsBox.style.display = 'block';
+        multiplayerOptionsBox.style.display = 'none';
+        btnModeIndicator.textContent = "🎮 Solo Mode";
+      } else {
+        soloOptionsBox.style.display = 'none';
+        multiplayerOptionsBox.style.display = 'flex';
+        btnModeIndicator.textContent = "🌐 Multiplayer";
+      }
+    });
+
+    // Match Setting Selection
+    function bindChips(containerId, cb) {
+      const container = document.getElementById(containerId);
+      const buttons = container.querySelectorAll('.school-chip-btn');
+      buttons.forEach(btn => {
+        btn.addEventListener('click', () => {
+          buttons.forEach(b => b.classList.remove('selected'));
+          btn.classList.add('selected');
+          cb(btn.dataset.val);
+        });
+      });
+    }
+    bindChips('overs-select', v => GameState.overs = parseInt(v));
+    bindChips('wickets-select', v => GameState.wicketsLimit = parseInt(v));
+    bindChips('diff-select', v => GameState.difficulty = v);
+
+    // Create Multiplayer Room (Host)
+    document.getElementById('btn-create-room').addEventListener('click', () => {
+      audio.init();
+      modalSettings.classList.remove('active');
+      modalWaitingPeer.classList.add('active');
+
+      mp.initHost(
+        roomId => {
+          document.getElementById('display-room-code').textContent = roomId;
+        },
+        () => {
+          // Connected with friend!
+          audio.playSchoolBell();
+          modalWaitingPeer.classList.remove('active');
+          setupMultiplayerRoles(true);
+        },
+        data => {
+          handlePeerMessage(data);
+        }
+      );
+    });
+
+    // Copy Invite Link
+    document.getElementById('btn-copy-link').addEventListener('click', () => {
+      const url = window.location.origin + window.location.pathname + '?room=' + mp.roomId;
+      navigator.clipboard.writeText(url).then(() => {
+        document.getElementById('btn-copy-link').textContent = "✅ Link Copied!";
+        setTimeout(() => document.getElementById('btn-copy-link').textContent = "📋 Copy Invite Link", 2000);
+      });
+    });
+
+    // Join Multiplayer Room
+    document.getElementById('btn-join-room').addEventListener('click', () => {
+      const code = document.getElementById('input-join-code').value.trim();
+      if (!code) {
+        alert('Please enter your friend\'s room code!');
+        return;
+      }
+      audio.init();
+      document.getElementById('btn-join-room').textContent = "Connecting to desk...";
+
+      mp.initJoin(
+        code,
+        () => {
+          audio.playSchoolBell();
+          modalSettings.classList.remove('active');
+          setupMultiplayerRoles(false);
+        },
+        data => {
+          handlePeerMessage(data);
+        },
+        err => {
+          alert('Could not connect to room! Check code and try again.');
+          document.getElementById('btn-join-room').textContent = "Join Room 🚀";
+        }
+      );
+    });
+
+    // Check URL parameters for instant room joining (?room=CRIC1234)
+    window.addEventListener('DOMContentLoaded', () => {
+      const params = new URLSearchParams(window.location.search);
+      const roomParam = params.get('room');
+      if (roomParam) {
+        // Auto select multiplayer and fill input
+        document.querySelector('[data-val="multiplayer"]').click();
+        document.getElementById('input-join-code').value = roomParam;
+      }
+    });
+
+    document.getElementById('btn-cancel-waiting').addEventListener('click', () => {
+      modalWaitingPeer.classList.remove('active');
+      modalSettings.classList.add('active');
+    });
+
+    function setupMultiplayerRoles(isHost) {
+      GameState.mode = 'multiplayer';
+      labelPlayerHand.textContent = isHost ? "YOU (Host)" : "YOU (Friend)";
+      labelAiHand.textContent = isHost ? "FRIEND" : "HOST";
+      playerLabelScore.textContent = "YOU";
+
+      if (isHost) {
+        modalToss.classList.add('active');
+        coinGroup.visible = true;
+        coinGroup.position.set(0, 1.2, 0);
+      } else {
+        showBanner("WAITING FOR TOSS...", "Host is flipping coin on desk", "info", 0);
+      }
+    }
+
+    // Solo Coin Toss
+    document.getElementById('btn-start-toss').addEventListener('click', () => {
+      audio.init();
+      audio.playSchoolBell();
+      modalSettings.classList.remove('active');
+      modalToss.classList.add('active');
+      coinGroup.visible = true;
+      coinGroup.position.set(0, 1.2, 0);
+      coinMesh.rotation.set(0, 0, 0);
+    });
+
+    const btnHeads = document.getElementById('call-heads');
+    const btnTails = document.getElementById('call-tails');
+    btnHeads.addEventListener('click', () => {
+      GameState.userCall = 'heads';
+      btnHeads.classList.add('selected');
+      btnTails.classList.remove('selected');
+    });
+    btnTails.addEventListener('click', () => {
+      GameState.userCall = 'tails';
+      btnTails.classList.add('selected');
+      btnHeads.classList.remove('selected');
+    });
+
+    // Spin 3D Coin on Desk
+    let coinFlipping = false;
+    let coinTime = 0;
+    let coinOutcome = 'heads';
+
+    document.getElementById('btn-flip-coin').addEventListener('click', () => {
+      if (coinFlipping) return;
+      audio.init();
+      coinFlipping = true;
+      coinTime = 0;
+      audio.playCoinDesk();
+      document.getElementById('btn-flip-coin').style.display = 'none';
+      document.getElementById('toss-call-row').style.display = 'none';
+      document.getElementById('toss-instruction').textContent = "Spinning coin on the bench... Shhh!";
+      coinOutcome = Math.random() < 0.5 ? 'heads' : 'tails';
+
+      if (GameState.mode === 'multiplayer' && mp.isHost) {
+        mp.send({ type: 'coin_flip', outcome: coinOutcome });
+      }
+    });
+
+    function animateCoinFlip(delta) {
+      if (!coinFlipping) return;
+      coinTime += delta;
+      const duration = 2.2;
+      const progress = coinTime / duration;
+
+      if (progress < 1) {
+        const h = Math.sin(progress * Math.PI) * 2.2;
+        coinGroup.position.y = 1.2 + h;
+        coinMesh.rotation.x += 16 * delta;
+        coinMesh.rotation.z += 8 * delta;
+      } else {
+        coinFlipping = false;
+        coinGroup.position.y = 1.2;
+        audio.playCoinDesk();
+        if (coinOutcome === 'heads') {
+          coinMesh.rotation.set(0, 0, 0);
+        } else {
+          coinMesh.rotation.set(Math.PI, 0, 0);
+        }
+        handleTossResult();
+      }
+    }
+
+    function handleTossResult() {
+      const isPlayerWin = (GameState.userCall === coinOutcome);
+      GameState.tossWinner = isPlayerWin ? 'player' : 'ai';
+
+      const decisionBox = document.getElementById('toss-decision-box');
+      const resultText = document.getElementById('toss-result-text');
+      const chooseRow = document.getElementById('toss-choose-row');
+      const btnStart = document.getElementById('btn-start-match');
+
+      decisionBox.style.display = 'flex';
+
+      if (GameState.mode === 'multiplayer') {
+        if (isPlayerWin) {
+          resultText.innerHTML = `Coin is <strong>${coinOutcome.toUpperCase()}</strong>!<br>🎉 YOU WON THE TOSS! Pick Bat or Bowl:`;
+          chooseRow.style.display = 'flex';
+          btnStart.style.display = 'none';
+        } else {
+          resultText.innerHTML = `Coin is <strong>${coinOutcome.toUpperCase()}</strong>.<br>Friend won the toss! Waiting for their choice...`;
+          chooseRow.style.display = 'none';
+          btnStart.style.display = 'none';
+          mp.send({ type: 'toss_choice_request' });
+        }
+      } else {
+        // Solo vs AI
+        if (isPlayerWin) {
+          resultText.innerHTML = `Coin is <strong>${coinOutcome.toUpperCase()}</strong>!<br>🎉 YOU WON THE TOSS! Pick Bat or Bowl:`;
+          chooseRow.style.display = 'flex';
+          btnStart.style.display = 'none';
+        } else {
+          const aiChoice = Math.random() < 0.5 ? 'bat' : 'bowl';
+          GameState.userRole = (aiChoice === 'bat') ? 'bowl' : 'bat';
+          resultText.innerHTML = `Coin is <strong>${coinOutcome.toUpperCase()}</strong>.<br>Friend won the toss and chose to <strong>${aiChoice.toUpperCase()}</strong>!`;
+          chooseRow.style.display = 'none';
+          btnStart.style.display = 'block';
+        }
+      }
+    }
+
+    document.getElementById('choose-bat').addEventListener('click', () => {
+      GameState.userRole = 'bat';
+      if (GameState.mode === 'multiplayer') {
+        mp.send({ type: 'match_start', hostRole: 'bat', overs: GameState.overs, wicketsLimit: GameState.wicketsLimit });
+      }
+      startMatch();
+    });
+    document.getElementById('choose-bowl').addEventListener('click', () => {
+      GameState.userRole = 'bowl';
+      if (GameState.mode === 'multiplayer') {
+        mp.send({ type: 'match_start', hostRole: 'bowl', overs: GameState.overs, wicketsLimit: GameState.wicketsLimit });
+      }
+      startMatch();
+    });
+    document.getElementById('btn-start-match').addEventListener('click', () => {
+      startMatch();
+    });
+
+    function startMatch() {
+      modalToss.classList.remove('active');
+      coinGroup.visible = false;
+      initInnings(1);
+    }
+
+    // Multiplayer Message Handler
+    function handlePeerMessage(msg) {
+      if (msg.type === 'coin_flip') {
+        coinOutcome = msg.outcome;
+        coinFlipping = true;
+        coinTime = 0;
+        coinGroup.visible = true;
+        audio.playCoinDesk();
+      } else if (msg.type === 'toss_choice_request') {
+        // Host asks client to choose bat or bowl
+        modalToss.classList.add('active');
+        document.getElementById('toss-decision-box').style.display = 'flex';
+        document.getElementById('toss-result-text').innerHTML = `🎉 YOU WON THE TOSS!<br>Choose to Bat or Bowl:`;
+        document.getElementById('toss-choose-row').style.display = 'flex';
+        document.getElementById('toss-call-row').style.display = 'none';
+        document.getElementById('btn-flip-coin').style.display = 'none';
+      } else if (msg.type === 'match_start') {
+        GameState.overs = msg.overs;
+        GameState.wicketsLimit = msg.wicketsLimit;
+        GameState.userRole = (msg.hostRole === 'bat') ? 'bowl' : 'bat';
+        modalToss.classList.remove('active');
+        coinGroup.visible = false;
+        initInnings(1);
+      } else if (msg.type === 'peer_throw') {
+        mp.remoteThrow = msg.num;
+        if (mp.localThrow !== null) {
+          executeThrow(mp.localThrow, mp.remoteThrow);
+        } else {
+          showBanner("FRIEND READY!", "Your friend threw! Now pick yours!", "info", 0);
+        }
+      } else if (msg.type === 'start_innings_2') {
+        modalBreak.classList.remove('active');
+        initInnings(2);
+      } else if (msg.type === 'play_again') {
+        modalGameOver.classList.remove('active');
+        modalSettings.classList.add('active');
+        GameState.isThrowing = false;
+        renderHands(0, 0);
+      }
+    }
+
+    /* ==========================================================
+       6. INNINGS & MATCH PLAY (Universal Solo + Multiplayer)
+       ========================================================== */
+    function initInnings(num) {
+      GameState.currentInnings = num;
+      GameState.runs = 0;
+      GameState.wickets = 0;
+      GameState.balls = 0;
+      GameState.historyThisOver = [];
+      GameState.isThrowing = false;
+      mp.localThrow = null;
+      mp.remoteThrow = null;
+      renderHands(0, 0);
+
+      maxOversDisplay.textContent = GameState.overs.toFixed(1);
+      updateScoreboard();
+
+      if (num === 1) {
+        matchStatusTag.textContent = "1ST INNINGS";
+        targetBlock.style.display = 'none';
+        const isBatting = (GameState.userRole === 'bat');
+        roleText.textContent = isBatting ? "(Batting)" : "(Bowling)";
+        showBanner("TOSS DONE!", isBatting ? "You are batting first!" : "You are bowling first!", "info", 2200);
+      } else {
+        matchStatusTag.textContent = "2ND INNINGS (CHASE)";
+        targetBlock.style.display = 'block';
+        GameState.target = GameState.firstInningsScore + 1;
+        targetDisplay.textContent = GameState.target;
+
+        const isBatting = (GameState.userRole === 'bat');
+        roleText.textContent = isBatting ? "(Chasing)" : "(Defending)";
+        updateChaseEquation();
+        showBanner("THE CHASE!", isBatting ? `Target: ${GameState.target} to win!` : `Defend ${GameState.target - 1} runs!`, "info", 2400);
+      }
+      setButtonsEnabled(true);
+    }
+
+    function updateScoreboard() {
+      runsDisplay.textContent = GameState.runs;
+      wicketsDisplay.textContent = GameState.wickets;
+      const oversDone = Math.floor(GameState.balls / 6);
+      const ballsInOver = GameState.balls % 6;
+      oversDisplay.textContent = `${oversDone}.${ballsInOver}`;
+
+      timelineStrip.innerHTML = '<span style="font-weight:bold;">THIS OVER:</span>';
+      if (GameState.historyThisOver.length === 0) {
+        timelineStrip.innerHTML += '<span class="ball-circle-pen dot">•</span>';
+      } else {
+        GameState.historyThisOver.forEach(val => {
+          let cls = 'dot';
+          if (val === 'W') cls = 'out';
+          else if (val === 4) cls = 'four';
+          else if (val === 6) cls = 'six';
+          else if (val > 0) cls = '';
+          timelineStrip.innerHTML += `<span class="ball-circle-pen ${cls}">${val}</span>`;
+        });
+      }
+    }
+
+    function updateChaseEquation() {
+      if (GameState.currentInnings !== 2) return;
+      const totalBalls = GameState.overs * 6;
+      const ballsLeft = Math.max(0, totalBalls - GameState.balls);
+      const runsNeeded = Math.max(0, GameState.target - GameState.runs);
+      if (GameState.userRole === 'bat') {
+        chaseEquation.textContent = `Need ${runsNeeded} in ${ballsLeft}b`;
+      } else {
+        chaseEquation.textContent = `Friend needs ${runsNeeded} in ${ballsLeft}b`;
+      }
+    }
+
+    function getAIMove() {
+      const history = GameState.playerThrowsHistory;
+      if (GameState.difficulty === 'easy' || history.length === 0) {
+        return Math.floor(Math.random() * 6) + 1;
+      }
+      if (GameState.difficulty === 'pro') {
+        const weights = [0.12, 0.22, 0.16, 0.24, 0.12, 0.24];
+        let r = Math.random();
+        let acc = 0;
+        for (let i = 0; i < 6; i++) {
+          acc += weights[i];
+          if (r <= acc) return i + 1;
+        }
+        return 4;
+      }
+      const lastPlayer = history[history.length - 1];
+      if (Math.random() < 0.45) return lastPlayer;
+      return Math.floor(Math.random() * 6) + 1;
+    }
+
+    function handlePlayerThrow(playerNum) {
+      if (GameState.isThrowing) return;
+      audio.init();
+
+      if (GameState.mode === 'multiplayer') {
+        mp.localThrow = playerNum;
+        mp.send({ type: 'peer_throw', num: playerNum });
+        setButtonsEnabled(false);
+
+        if (mp.remoteThrow !== null) {
+          executeThrow(mp.localThrow, mp.remoteThrow);
+        } else {
+          showBanner("WAITING...", "Waiting for friend to pick...", "info", 0);
+        }
+      } else {
+        // Solo Mode vs AI
+        GameState.isThrowing = true;
+        setButtonsEnabled(false);
+        GameState.playerThrowsHistory.push(playerNum);
+        const aiNum = getAIMove();
+        GameState.aiThrowsHistory.push(aiNum);
+        executeThrow(playerNum, aiNum);
+      }
+    }
+
+    function executeThrow(playerNum, opponentNum) {
+      GameState.isThrowing = true;
+      setButtonsEnabled(false);
+
+      playerHandCard.classList.add('shake');
+      aiHandCard.classList.add('shake');
+      audio.playDeskThud();
+      showBanner("3", "Slamming on desk...", "info", 0);
+
+      let count = 3;
+      const timer = setInterval(() => {
+        count--;
+        if (count === 2) {
+          audio.playDeskThud();
+          showBanner("2", "Get ready...", "info", 0);
+        } else if (count === 1) {
+          audio.playDeskThud();
+          showBanner("1", "Throw!", "info", 0);
+        } else if (count === 0) {
+          clearInterval(timer);
+          playerHandCard.classList.remove('shake');
+          aiHandCard.classList.remove('shake');
+          audio.playDeskThud();
+          revealThrow(playerNum, opponentNum);
+        }
+      }, 300);
+    }
+
+    function revealThrow(playerNum, opponentNum) {
+      renderHands(playerNum, opponentNum);
+
+      const isSame = (playerNum === opponentNum);
+      const userIsBatting = (GameState.userRole === 'bat');
+      GameState.balls++;
+
+      if (isSame) {
+        audio.playOutShout();
+        if (navigator.vibrate) navigator.vibrate([150, 60, 250]);
+        GameState.wickets++;
+        GameState.historyThisOver.push('W');
+        showBanner("HOWZAT! OUT! 💥", userIsBatting ? "You gave your wicket away!" : "Clean bowled! Great wicket!", "out", 1800);
+      } else {
+        const runsScored = userIsBatting ? playerNum : opponentNum;
+        GameState.runs += runsScored;
+        GameState.historyThisOver.push(runsScored);
+
+        if (runsScored === 6) {
+          audio.playSixCheer();
+          showBanner("CHOKKA! 🚀 (6)", userIsBatting ? "Ball flew out of the classroom!" : "Friend smashed a massive 6!", "six", 1800);
+        } else if (runsScored === 4) {
+          audio.playDeskThud();
+          showBanner("FOUR! 🎯 (4)", userIsBatting ? "Boundary through the benches!" : "Friend hit a boundary 4!", "four", 1800);
+        } else {
+          audio.playDeskThud();
+          showBanner(`${runsScored} RUNS!`, "", "info", 1300);
+        }
+      }
+
+      updateScoreboard();
+      updateChaseEquation();
+
+      setTimeout(() => {
+        checkInningsProgress();
+      }, 1400);
+    }
+
+    function checkInningsProgress() {
+      const maxBalls = GameState.overs * 6;
+      const isWicketsOut = (GameState.wickets >= GameState.wicketsLimit);
+      const isOversFinished = (GameState.balls >= maxBalls);
+
+      if (GameState.currentInnings === 1) {
+        if (isWicketsOut || isOversFinished) {
+          endInnings1();
+          return;
+        }
+      } else {
+        if (GameState.userRole === 'bat') {
+          if (GameState.runs >= GameState.target) {
+            endMatch('player_win');
+            return;
+          }
+          if (isWicketsOut || isOversFinished) {
+            if (GameState.runs === GameState.target - 1) endMatch('tie');
+            else endMatch('ai_win');
+            return;
+          }
+        } else {
+          if (GameState.runs >= GameState.target) {
+            endMatch('ai_win');
+            return;
+          }
+          if (isWicketsOut || isOversFinished) {
+            if (GameState.runs === GameState.target - 1) endMatch('tie');
+            else endMatch('player_win');
+            return;
+          }
+        }
+      }
+
+      // Reset for next ball
+      GameState.isThrowing = false;
+      mp.localThrow = null;
+      mp.remoteThrow = null;
+      setButtonsEnabled(true);
+      renderHands(0, 0);
+    }
+
+    function endInnings1() {
+      GameState.isThrowing = false;
+      GameState.firstInningsScore = GameState.runs;
+      GameState.firstInningsWickets = GameState.wickets;
+      GameState.userRole = (GameState.userRole === 'bat') ? 'bowl' : 'bat';
+
+      const breakSummary = document.getElementById('break-summary-text');
+      const breakTargetNum = document.getElementById('break-target-num');
+      const breakEquation = document.getElementById('break-equation');
+
+      const target = GameState.firstInningsScore + 1;
+      const totalBalls = GameState.overs * 6;
+      breakTargetNum.textContent = target;
+
+      if (GameState.userRole === 'bat') {
+        breakSummary.textContent = `Opponent scored ${GameState.firstInningsScore}/${GameState.firstInningsWickets}. Now it's your turn to bat!`;
+        breakEquation.textContent = `Need ${target} runs in ${totalBalls} balls to win`;
+      } else {
+        breakSummary.textContent = `You scored ${GameState.firstInningsScore}/${GameState.firstInningsWickets}. Now defend on the desk!`;
+        breakEquation.textContent = `Defend ${GameState.firstInningsScore} runs`;
+      }
+
+      modalBreak.classList.add('active');
+    }
+
+    document.getElementById('btn-start-innings2').addEventListener('click', () => {
+      modalBreak.classList.remove('active');
+      if (GameState.mode === 'multiplayer') {
+        mp.send({ type: 'start_innings_2' });
+      }
+      initInnings(2);
+    });
+
+    function endMatch(result) {
+      GameState.isThrowing = true;
+      const title = document.getElementById('gameover-title');
+      const subtitle = document.getElementById('gameover-subtitle');
+      const pScore = document.getElementById('final-player-score');
+      const aScore = document.getElementById('final-ai-score');
+
+      if (GameState.userRole === 'bat') {
+        pScore.textContent = `${GameState.runs}/${GameState.wickets}`;
+        aScore.textContent = `${GameState.firstInningsScore}/${GameState.firstInningsWickets}`;
+      } else {
+        aScore.textContent = `${GameState.runs}/${GameState.wickets}`;
+        pScore.textContent = `${GameState.firstInningsScore}/${GameState.firstInningsWickets}`;
+      }
+
+      if (result === 'player_win') {
+        audio.playSchoolBell();
+        title.innerHTML = '🏆 YOU WON THE MATCH!';
+        title.style.color = '#2e7d32';
+        subtitle.textContent = "Last bench championship belongs to you! Treat your friend to a samosa!";
+      } else if (result === 'ai_win') {
+        title.innerHTML = '💔 FRIEND WON!';
+        title.style.color = '#c62828';
+        subtitle.textContent = "Friend read your fingers this time! Ask for a rematch before the bell rings.";
+      } else {
+        title.innerHTML = '🤝 MATCH TIED!';
+        title.style.color = '#0d47a1';
+        subtitle.textContent = "Exact same score! What an epic last-bench classic!";
+      }
+
+      modalGameOver.classList.add('active');
+    }
+
+    document.getElementById('btn-play-again').addEventListener('click', () => {
+      modalGameOver.classList.remove('active');
+      modalSettings.classList.add('active');
+      GameState.isThrowing = false;
+      mp.localThrow = null;
+      mp.remoteThrow = null;
+      renderHands(0, 0);
+
+      if (GameState.mode === 'multiplayer') {
+        mp.send({ type: 'play_again' });
+      }
+    });
+
+    function showBanner(title, sub, type, duration = 1800) {
+      bannerText.className = `chalk-shout ${type} show`;
+      bannerText.textContent = title;
+      if (sub) {
+        bannerSub.textContent = sub;
+        bannerSub.style.display = 'inline-block';
+      } else {
+        bannerSub.style.display = 'none';
+      }
+      if (duration > 0) {
+        clearTimeout(bannerText._timer);
+        bannerText._timer = setTimeout(() => {
+          bannerText.classList.remove('show');
+          bannerSub.style.display = 'none';
+        }, duration);
+      }
+    }
+
+    function setButtonsEnabled(enabled) {
+      throwButtons.forEach(btn => {
+        if (enabled) btn.classList.remove('disabled');
+        else btn.classList.add('disabled');
+      });
+    }
+
+    throwButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const num = parseInt(btn.dataset.num);
+        handlePlayerThrow(num);
+      });
+    });
+
+    window.addEventListener('keydown', e => {
+      const num = parseInt(e.key);
+      if (num >= 1 && num <= 6) {
+        handlePlayerThrow(num);
+      }
+    });
+
+    // Three.js Render Loop for 3D Coin on Desk
+    const clock = new THREE.Clock();
+    function animate() {
+      requestAnimationFrame(animate);
+      const delta = clock.getDelta();
+      animateCoinFlip(delta);
+      renderer.render(scene, camera);
+    }
+    animate();
+  </script>
+</body>
+</html>
