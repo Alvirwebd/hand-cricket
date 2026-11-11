@@ -980,7 +980,7 @@
           <button class="school-chip-btn" data-val="3">3 Outs</button>
         </div>
 
-        <button class="school-action-btn green" id="btn-host-create-room" style="margin-top:4px;">Create Match Room 📡</button>
+        <button class="school-action-btn green" id="btn-host-create-room" onclick="hostCreateRoom()" style="margin-top:4px;">Create Match Room 📡</button>
       </div>
 
       <div style="font-size:13px; font-weight:bold; color:#888;">— OR —</div>
@@ -990,7 +990,7 @@
         <div style="font-family:'Permanent Marker', cursive; font-size:18px; color:#e65100;">🚀 OPTION B: JOIN FRIEND'S ROOM</div>
         <div style="font-size:13px; color:#555;">Enter the 4-digit code given by your friend:</div>
         <input type="text" class="room-input" id="input-friend-code" placeholder="ENTER 4 DIGITS" maxlength="8" autocomplete="off" />
-        <button class="school-action-btn orange" id="btn-join-friend-room">Join Friend's Match 🏏</button>
+        <button class="school-action-btn orange" id="btn-join-friend-room" onclick="joinFriendRoomClick()">Join Friend's Match 🏏</button>
       </div>
 
       <button class="back-link-btn" id="btn-back-to-modes" onclick="openMainMenu()">← Back to Main Menu</button>
@@ -1614,9 +1614,7 @@
     const modalBreak = document.getElementById('modal-break');
     const modalGameOver = document.getElementById('modal-gameover');
 
-    const btnTopFriends = document.getElementById('btn-top-friends');
-    const btnTopMenu = document.getElementById('btn-top-menu');
-    const btnSound = document.getElementById('btn-sound');
+        const btnSound = document.getElementById('btn-sound');
 
     const runsDisplay = document.getElementById('runs-display');
     const wicketsDisplay = document.getElementById('wickets-display');
@@ -1652,18 +1650,7 @@
       btnSound.textContent = audio.enabled ? '🔊' : '🔇';
     });
 
-    // Top Navigation
-    btnTopFriends.addEventListener('click', () => {
-      audio.init();
-      closeAllModals();
-      modalMultiplayerLobby.classList.add('active');
-    });
-
-    btnTopMenu.addEventListener('click', () => {
-      audio.init();
-      closeAllModals();
-      modalMainMenu.classList.add('active');
-    });
+    // Top Navigation handled via inline openMainMenu() and openMultiplayerLobby()
 
     // Mode Selection Handlers
     document.getElementById('btn-choose-multiplayer').addEventListener('click', () => {
@@ -1714,10 +1701,12 @@
        7. MULTIPLAYER HOST & JOIN ACTIONS
        ========================================================== */
     // Host: Create Room
-    document.getElementById('btn-host-create-room').addEventListener('click', () => {
+    window.hostCreateRoom = function() {
       audio.init();
       startHostRoom();
-    });
+    };
+    const _hostBtn = document.getElementById('btn-host-create-room');
+    if (_hostBtn) _hostBtn.addEventListener('click', window.hostCreateRoom);
 
     function startHostRoom() {
       closeAllModals();
@@ -1797,14 +1786,17 @@
     });
 
     // Join Friend's Room via Input
-    document.getElementById('btn-join-friend-room').addEventListener('click', () => {
-      const code = document.getElementById('input-friend-code').value.trim();
+    window.joinFriendRoomClick = function() {
+      const codeInput = document.getElementById('input-friend-code');
+      const code = codeInput ? codeInput.value.trim() : '';
       if (!code) {
         alert('Please enter your friend\'s 4-digit room code!');
         return;
       }
       joinRoomWithCode(code);
-    });
+    };
+    const _joinBtn = document.getElementById('btn-join-friend-room');
+    if (_joinBtn) _joinBtn.addEventListener('click', window.joinFriendRoomClick);
 
     function joinRoomWithCode(code) {
       audio.init();
