@@ -3,10 +3,40 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
   <title>Classroom Hand Cricket - Online Multiplayer & Last Bench 🏫🏏</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Kalam:wght@700&family=Patrick+Hand&family=Permanent+Marker&display=swap" rel="stylesheet">
+  <script>
+    window.closeAllModals = function() {
+      document.querySelectorAll('.school-modal-backdrop').forEach(function(el) {
+        el.classList.remove('active');
+        el.style.display = 'none';
+      });
+    };
+    window.openModal = function(id) {
+      window.closeAllModals();
+      var target = document.getElementById(id);
+      if (target) {
+        target.classList.add('active');
+        target.style.display = 'flex';
+      }
+    };
+    window.openMultiplayerLobby = function() {
+      try { if (window.audio) window.audio.playSchoolBell(); } catch(e){}
+      window.openModal('modal-multiplayer-lobby');
+    };
+    window.openSoloMatch = function() {
+      try { if (window.audio) window.audio.init(); } catch(e){}
+      window.openModal('modal-solo-settings');
+    };
+    window.openMainMenu = function() {
+      window.openModal('modal-main-menu');
+    };
+  </script>
   <style>
     :root {
       --wood-dark: #2b1708;
@@ -490,22 +520,20 @@
       left: 0;
       width: 100vw;
       height: 100vh;
-      background: rgba(18, 9, 4, 0.92);
+      background: rgba(18, 9, 4, 0.94);
       backdrop-filter: blur(8px);
       -webkit-backdrop-filter: blur(8px);
       z-index: 1000;
-      display: flex;
+      display: none;
       align-items: center;
       justify-content: center;
       padding: 14px;
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 0.2s ease;
       overflow-y: auto;
     }
     .school-modal-backdrop.active {
-      opacity: 1;
-      pointer-events: auto;
+      display: flex !important;
+      opacity: 1 !important;
+      pointer-events: auto !important;
     }
 
     .notebook-popup-card {
@@ -740,8 +768,8 @@
 
   <!-- Top Utilities -->
   <div class="top-desk-tools interactive">
-    <button id="btn-top-friends" class="tool-icon-btn highlight">👥 Play with Friend</button>
-    <button id="btn-top-menu" class="tool-icon-btn">🏠 Modes</button>
+    <button id="btn-top-friends" class="tool-icon-btn highlight" onclick="openMultiplayerLobby()">👥 Play with Friend</button>
+    <button id="btn-top-menu" class="tool-icon-btn" onclick="openMainMenu()">🏠 Modes</button>
     <button id="btn-sound" class="tool-icon-btn" title="Toggle Sound">🔊</button>
   </div>
 
@@ -833,7 +861,7 @@
       <p class="popup-sub">"Tiffin time! Teacher isn't looking. Choose how you want to play:"</p>
       
       <!-- Option 1: Play with Friend (Multiplayer) -->
-      <div class="mode-big-card primary" id="btn-choose-multiplayer">
+      <div class="mode-big-card primary" id="btn-choose-multiplayer" onclick="openMultiplayerLobby()" role="button" tabindex="0">
         <div class="mode-icon">👥</div>
         <div class="mode-info">
           <div class="mode-title">PLAY WITH A FRIEND <span class="mode-badge">2-Player Online 🔥</span></div>
@@ -842,7 +870,7 @@
       </div>
 
       <!-- Option 2: Solo vs AI -->
-      <div class="mode-big-card" id="btn-choose-solo">
+      <div class="mode-big-card" id="btn-choose-solo" onclick="openSoloMatch()" role="button" tabindex="0">
         <div class="mode-icon">🤖</div>
         <div class="mode-info">
           <div class="mode-title">SOLO VS AI BENCHMATE <span class="mode-badge" style="background:#1976d2;">Practice</span></div>
@@ -889,7 +917,7 @@
         <button class="school-action-btn orange" id="btn-join-friend-room">Join Friend's Match 🏏</button>
       </div>
 
-      <button class="back-link-btn" id="btn-back-to-modes">← Back to Main Menu</button>
+      <button class="back-link-btn" id="btn-back-to-modes" onclick="openMainMenu()">← Back to Main Menu</button>
     </div>
   </div>
 
@@ -962,7 +990,7 @@
       </div>
 
       <button class="school-action-btn" id="btn-start-solo-toss" style="margin-top:8px;">🪙 Flip Coin On Desk!</button>
-      <button class="back-link-btn" id="btn-solo-back-to-modes">← Back to Main Menu</button>
+      <button class="back-link-btn" id="btn-solo-back-to-modes" onclick="openMainMenu()">← Back to Main Menu</button>
     </div>
   </div>
 
