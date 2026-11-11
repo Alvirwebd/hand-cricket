@@ -1368,6 +1368,7 @@
        ========================================================== */
     let scene, camera, renderer, coinMesh, coinGroup;
     let coinFlipping = false, coinTime = 0, coinOutcome = 'heads';
+    let coinSafetyTimer = null;
     function init3DScene() {
       const canvas = document.getElementById('canvas3d');
       renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
@@ -1933,6 +1934,19 @@
       document.getElementById('toss-instruction').textContent = "Spinning coin on the bench... Shhh!";
       coinOutcome = Math.random() < 0.5 ? 'heads' : 'tails';
 
+      // SAFETY NET: never let the toss hang if the rAF animation loop is
+      // frozen/throttled (phone battery saver, backgrounded tab, etc.)
+      clearTimeout(coinSafetyTimer);
+      coinSafetyTimer = setTimeout(() => {
+        if (!coinFlipping) return;
+        coinFlipping = false;
+        coinGroup.position.y = 1.2;
+        coinMesh.rotation.set(coinOutcome === 'heads' ? 0 : Math.PI, 0, 0);
+        if (GameState.mode === 'solo' || (GameState.mode === 'multiplayer' && mp.isHost)) {
+          handleTossResult();
+        }
+      }, 3500);
+
       if (GameState.mode === 'multiplayer' && mp.isHost) {
         mp.send({
           type: 'host_flipped_coin',
@@ -1955,6 +1969,7 @@
         coinMesh.rotation.z += 8 * delta;
       } else {
         coinFlipping = false;
+        clearTimeout(coinSafetyTimer);
         coinGroup.position.y = 1.2;
         audio.playCoinDesk();
         if (coinOutcome === 'heads') {
